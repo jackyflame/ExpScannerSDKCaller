@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">机打手机号与一维码识别</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="intsig_copyright">上海合合信息科技发展有限公司\n Copyright© 2009-2017 版权所有</string>
+
+    <string name="card_complete">完整</string>
+    <string name="card_not_complete">不完整</string>
+
+    <string name="fail_to_contect_camcard">无法连接到相机,请检查权限设置</string>
+    
+    <string name="no_support_feature">不支持完整性判断</string>
+    <string name="image_quality_ok">图像质量完好</string>
+    <string name="image_shield">图像有遮挡</string>
+    <string name="avatar_reflective">头像有反光</string>
+    <string name="image_emblem_shield">国徽有遮挡</string>
+    <string name="image_avatar_shield">头像有遮挡</string>
+
+    <string name="color_image_yes">是</string>
+    <string name="color_image_no">否</string>
+    
+     <string name="cui_app_title">机打手机号与一维码识别识别</string>
+      <string name="cui_dl_tips_take_photo">SDK预览</string>
+    <string name="cui_dl_tips_pick_photo">自定义预览</string>
+        <string name="cui_a_msg_empty_tips">请先相机预览来识别</string>
+      <string name="cui_result_title">识别结果</string>
+    <string name="cui_result_btn">确认</string>
+</resources>
