@@ -17,22 +17,4 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"/>
 
-        <ImageView
-            android:id="@+id/img_rst"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"/>
-
-
-    <TextView
-        android:id="@+id/txv_rst"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="20dp"
-        android:textColor="@color/back_line_2"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true"/>
-
 </RelativeLayout>

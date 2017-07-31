@@ -584,8 +584,7 @@ public class PreviewActivity extends Activity implements
                             borderLeftAndRight, new IRecogStatusListener() {
 
                                 @Override
-                                public void onRecognizeExp(String result,
-                                                           int type) {
+                                public void onRecognizeExp(String result, int type) {
                                     Log.e("DetectExpressBillBarCodeAndNumberROI","true");
                                     /**
                                      * 一帧数据立马返回结果

@@ -12,7 +12,6 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Size;
@@ -24,17 +23,12 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.intsig.exp.sdk.ExpScannerCardUtil;
 import com.intsig.exp.sdk.IRecogStatusListener;
 import com.intsig.expscanerlib.R;
+import com.intsig.expscanerlib.handler.DetectThread;
 import com.intsig.expscanerlib.utils.SoundClips;
-
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
 
 /**
  * ClassName:ScanActivity <br/>
@@ -51,14 +45,12 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
     private Preview mPreview = null;
     private Camera mCamera = null;
     private int numberOfCameras;
+    private String lastRecgResultString = null;
 
     // The first rear facing camera
     private int defaultCameraId;
     private ExpScannerCardUtil expScannerCardUtil = null;
     private SoundClips.Player mSoundPlayer;
-
-    private ImageView img_rst;
-    private TextView txv_rst;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,8 +59,6 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
 
         mPreview = (Preview) findViewById(R.id.preview_scan);
         mPreview.setDetectView((DetectView) findViewById(R.id.detect_scan));
-        img_rst = (ImageView) findViewById(R.id.img_rst);
-        txv_rst = (TextView) findViewById(R.id.txv_rst);
 
         /*************************** Find the ID of the default camera******START ***********************/
         // Find the total number of cameras available
@@ -97,7 +87,7 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
         initEngin();
     }
 
-    private void initEngin(){
+    private void initEngin() {
         /*************************** init recog appkey ******START ***********************/
         expScannerCardUtil = new ExpScannerCardUtil();
         Intent intent = getIntent();
@@ -105,7 +95,7 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
         new AsyncTask<Void, Void, Integer>() {
             @Override
             protected Integer doInBackground(Void... params) {
-                int ret = expScannerCardUtil.initRecognizer(getApplication(),appkey);
+                int ret = expScannerCardUtil.initRecognizer(getApplication(), appkey);
                 return ret;
             }
 
@@ -215,7 +205,7 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
     public void onPreviewFrame(byte[] data, Camera camera) {
         Size size = camera.getParameters().getPreviewSize();
         if (mDetectThread == null) {
-            mDetectThread = new DetectThread();
+            mDetectThread = initDetectedThread();
             mDetectThread.start();
             /********************************* 自动对焦的核心 启动handler 来进行循环对焦 ***********************/
             mHandler.sendEmptyMessageDelayed(MSG_AUTO_FOCUS, 200);
@@ -290,143 +280,52 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
         }
     }
 
-    private Set<String> setResultSet = new HashSet<>();
-
     /**
      * 功能：将每一次预览的data 存入ArrayBlockingQueue 队列中，然后依次进行ismatch的验证，如果匹配就会就会进行进一步的识别
      * 注意点： 1.其中 控制预览框的位置大小，需要
      */
-    public void showView(final String result, final String time) {
+    public void showView(final String result) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                StringBuffer sb = new StringBuffer();
-                for (String s : setResultSet) {
-                    sb.append(s + "  ");
-                }
-                Log.i(TAG, "当前识别结果：" + result + "耗时：" + time);
-                //mResultValueAll.setText("当前识别结果集：" + sb.toString());
-                txv_rst.setText("当前识别结果：" + result + "耗时：" + time);
+                Log.i(TAG, "当前识别结果：" + result);
             }
         });
-    }
-
-    public void showCheckView(final Bitmap bitmap) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                img_rst.setImageBitmap(bitmap);
-            }
-        });
-    }
-
-    String lastRecgResultString = null;
-
-    private class DetectThread extends Thread {
-
-        private ArrayBlockingQueue<byte[]> mPreviewQueue = new ArrayBlockingQueue<byte[]>(1);
-        private int width;
-        private int height;
-
-        public void stopRun() {
-            addDetect(new byte[]{0}, -1, -1);
-        }
-
-        @Override
-        public void run() {
-            try {
-                while (true) {
-                    // block here, if no data in the queue.
-                    byte[] data = mPreviewQueue.take();
-                    // quit the thread, if we got special  byte array put by stopRun().
-                    if (data.length <= 1) {
-                        return;
-                    }
-                    // the (left, top, right, bottom) is base on preview image's coordinate. that's different with ui coordinate.
-                    /********************************* 通过底册api 将预览的数据 还有证件的坐标位置 获取当前一帧证件的4个点坐标的数组 ***********************/
-                    final long starttime = System.currentTimeMillis();
-
-                    //Rect clipRect = new Rect(borderLeftAndRight[0],borderLeftAndRight[1],borderLeftAndRight[2],borderLeftAndRight[3]);
-                    //Rect clipRect = mPreview.getDetctAreaRect();
-                    //if(clipRect.height() > 0 && clipRect.width() > 0){
-                    //    showCheckView(ImageUtils.makeCropedGrayBitmap(data.clone(),width,height,90,clipRect));
-                    //}
-
-                    expScannerCardUtil.recognizeExp(data, width, height, mPreview.getDetctArea(),
-                            new IRecogStatusListener() {
-                                @Override
-                                public void onRecognizeExp(String result, int type) {
-                                    Log.e(TAG, "DetectExpressBillBarCodeAndNumberROI:true");
-                                    /**
-                                     * 一帧数据立马返回结果
-                                     */
-                                    // mSoundPlayer
-                                    // .play(SoundClips.PICTURE_COMPLETE);
-                                    // setResultSet.add(result);
-                                    // showView(result);s
-                                    // // showResult(result, type);
-                                    // resumePreviewCallback();
-
-                                    // TODO Auto-generated method stub
-                                    // Log.e("result", result);
-                                    // mSoundPlayer
-                                    // .play(SoundClips.PICTURE_COMPLETE);
-                                    //
-                                    // showResult(result, type);
-                                    // Log.e("type", type + "");
-                                    /**
-                                     * 连续两帧数据一样才返回结果
-                                     */
-                                    if (lastRecgResultString == null) {
-                                        showView("lastRecgResultString:null,"+ "result:" + result, "");
-                                        lastRecgResultString = result;
-                                        resumePreviewCallback();
-                                    } else {
-                                        // showView("lastRecgResultString:"+
-                                        // lastRecgResultString+",result:"+
-                                        // result);
-                                        if (result.equals(lastRecgResultString)) {
-                                            long endtime = System.currentTimeMillis();
-                                            mSoundPlayer.play(SoundClips.PICTURE_COMPLETE);
-                                            setResultSet.add(result);
-                                            showView(result, (endtime - starttime) + "ms");
-                                            // showResult(result, type);
-                                            lastRecgResultString = result;
-                                            resumePreviewCallback();
-                                        } else {
-                                            lastRecgResultString = result;
-                                            resumePreviewCallback();
-                                        }
-
-                                    }
-                                    // showResult(result,type);
-                                }
-
-                                @Override
-                                public void onRecognizeError(int arg0) {
-                                    Log.e(TAG,"DetectExpressBillBarCodeAndNumberROI:false");
-                                    // TODO Auto-generated method stub
-                                    resumePreviewCallback();
-                                }
-                            });
-
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        public void addDetect(byte[] data, int width, int height) {
-            if (mPreviewQueue.size() == 1) {
-                mPreviewQueue.clear();
-            }
-            mPreviewQueue.add(data);
-            this.width = width;
-            this.height = height;
-        }
     }
 
     @Override
     public void onAutoFocus(boolean arg0, Camera arg1) {}
 
+    public DetectThread initDetectedThread(){
+        return new DetectThread(expScannerCardUtil, mPreview.getDetctArea(), new IRecogStatusListener() {
+            @Override
+            public void onRecognizeExp(String result, int type) {
+                Log.e(TAG,"DetectExpressBillBarCodeAndNumberROI -> true");
+                /**
+                 * 连续两帧数据一样才返回结果
+                 */
+                if (lastRecgResultString == null) {
+                    showView("lastRecgResultString:null," + "result:" + result);
+                    lastRecgResultString = result;
+                    resumePreviewCallback();
+                } else {
+                    if (result.equals(lastRecgResultString)) {
+                        mSoundPlayer .play(SoundClips.PICTURE_COMPLETE);
+                        showView(result);
+                        lastRecgResultString = result;
+                        resumePreviewCallback();
+                    } else {
+                        lastRecgResultString = result;
+                        resumePreviewCallback();
+                    }
+
+                }
+            }
+            @Override
+            public void onRecognizeError(int i) {
+                //Log.e(TAG, "DetectExpressBillBarCodeAndNumberROI -> false");
+                resumePreviewCallback();
+            }
+        });
+    }
 }
