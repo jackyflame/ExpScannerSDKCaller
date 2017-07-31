@@ -10,7 +10,6 @@ import android.graphics.Region;
 import android.os.Build;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import com.intsig.expscanerlib.R;
@@ -204,12 +203,13 @@ public class DetectView extends View {
         Map<String, Float> map = new HashMap<String, Float>();
         if (isVertical) {// vertical
             if(mClipRectSet == null || mClipRectSet.height() <= 0 || mClipRectSet.width() <= 0) {
-                int padding = 10;
-                left = 0 + padding;
-                right = newWidth-left-padding;
+                int padding_leftright = 50;
+                int padding_top = 150;
+                left = 0 + padding_leftright;
+                right = newWidth-left;
                 // 注释的部分 打开就是将预览框放置中心位置
-                top = 0+padding;
-                bottom = borderHeight+padding;
+                top = 0 + padding_top;
+                bottom = borderHeight + padding_top;
                 borderLeftAndRight[0] = (int) top;
                 borderLeftAndRight[1] = (int) left;
                 borderLeftAndRight[2] = (int) bottom;
@@ -230,7 +230,7 @@ public class DetectView extends View {
         map.put("top", top);
         map.put("bottom", bottom);
 
-        Log.i(TAG, "getPositionWithArea-->> scale:" + scale + ",scaleH:" + scaleH + "  borders:" + map.toString());
+        //Log.i(TAG, "getPositionWithArea-->> scale:" + scale + ",scaleH:" + scaleH + "  borders:" + map.toString());
 
         return map;
 

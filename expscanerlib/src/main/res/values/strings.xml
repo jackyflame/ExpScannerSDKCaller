@@ -27,4 +27,6 @@
         <string name="cui_a_msg_empty_tips">请先相机预览来识别</string>
       <string name="cui_result_title">识别结果</string>
     <string name="cui_result_btn">确认</string>
+
+    <string name="unsupportflash">此设备不支持闪光灯</string>
 </resources>

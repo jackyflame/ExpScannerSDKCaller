@@ -23,11 +23,14 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.intsig.exp.sdk.ExpScannerCardUtil;
 import com.intsig.exp.sdk.IRecogStatusListener;
 import com.intsig.expscanerlib.R;
 import com.intsig.expscanerlib.handler.DetectThread;
+import com.intsig.expscanerlib.utils.CameraSetting;
 import com.intsig.expscanerlib.utils.SoundClips;
 
 /**
@@ -35,7 +38,7 @@ import com.intsig.expscanerlib.utils.SoundClips;
  * Function: TODO ADD FUNCTION. <br/>
  * Reason: TODO ADD REASON. <br/>
  */
-public class ScanActivity extends Activity implements Camera.PreviewCallback, Camera.AutoFocusCallback {
+public class ScanActivity extends Activity implements Camera.PreviewCallback, Camera.AutoFocusCallback, View.OnClickListener {
 
     private static final String TAG = "ScanActivity";
     public static final String EXTRA_KEY_APP_KEY = "EXTRA_KEY_APP_KEY";
@@ -46,11 +49,17 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
     private Camera mCamera = null;
     private int numberOfCameras;
     private String lastRecgResultString = null;
+    private boolean mNeedInitCameraInResume = false;
+
+    private ImageView iv_camera_back;
+    private ImageView iv_camera_flash;
 
     // The first rear facing camera
     private int defaultCameraId;
     private ExpScannerCardUtil expScannerCardUtil = null;
     private SoundClips.Player mSoundPlayer;
+
+    private boolean isFlashOn = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +68,10 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
 
         mPreview = (Preview) findViewById(R.id.preview_scan);
         mPreview.setDetectView((DetectView) findViewById(R.id.detect_scan));
+        iv_camera_back = (ImageView) this.findViewById(R.id.iv_camera_back);
+        iv_camera_back.setOnClickListener(this);
+        iv_camera_flash = (ImageView) this.findViewById(R.id.iv_camera_flash);
+        iv_camera_flash.setOnClickListener(this);
 
         /*************************** Find the ID of the default camera******START ***********************/
         // Find the total number of cameras available
@@ -133,7 +146,17 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
         /*************************** init recog appkey ******END ***********************/
     }
 
-    boolean mNeedInitCameraInResume = false;
+    /**
+     * 刷新闪光灯开关
+     * */
+    protected void refreshFlashIcon(boolean isOn){
+        isFlashOn = isOn;
+        if(isFlashOn == false){
+            iv_camera_flash.setImageResource(R.drawable.flash_on);
+        }else{
+            iv_camera_flash.setImageResource(R.drawable.flash_off);
+        }
+    }
 
     @Override
     protected void onResume() {
@@ -141,6 +164,9 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
         try {
             mSoundPlayer.play(SoundClips.PICTURE_BEGIN);
             mCamera = Camera.open(defaultCameraId);// open the default camera
+            //关闭闪光灯
+            CameraSetting.getInstance(this).closedCameraFlash(mCamera);
+            refreshFlashIcon(false);
         } catch (Exception e) {
             e.printStackTrace();
             showFailedDialogAndFinish();
@@ -289,6 +315,7 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
             @Override
             public void run() {
                 Log.i(TAG, "当前识别结果：" + result);
+                Toast.makeText(getApplicationContext(),result,Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -300,7 +327,7 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
         return new DetectThread(expScannerCardUtil, mPreview.getDetctArea(), new IRecogStatusListener() {
             @Override
             public void onRecognizeExp(String result, int type) {
-                Log.e(TAG,"DetectExpressBillBarCodeAndNumberROI -> true");
+                Log.i(TAG,"DetectExpressBillBarCodeAndNumberROI -> true");
                 /**
                  * 连续两帧数据一样才返回结果
                  */
@@ -327,5 +354,20 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
                 resumePreviewCallback();
             }
         });
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v.getId() == R.id.iv_camera_back) {
+            this.finish();
+        } else if (v.getId() == R.id.iv_camera_flash) {
+            if (isFlashOn == false) {
+                refreshFlashIcon(!isFlashOn);
+                CameraSetting.getInstance(this).openCameraFlash(mCamera);
+            } else {
+                refreshFlashIcon(!isFlashOn);
+                CameraSetting.getInstance(this).closedCameraFlash(mCamera);
+            }
+        }
     }
 }
