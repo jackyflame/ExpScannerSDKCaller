@@ -42,6 +42,7 @@ public class ScanActivity extends Activity implements Camera.PreviewCallback, Ca
 
     private static final String TAG = "ScanActivity";
     public static final String EXTRA_KEY_APP_KEY = "EXTRA_KEY_APP_KEY";
+    //public static final String APP_KEY = "aNdU68LSTTrNCLQtPAEbK5RW";//正式环境SDK APPKEY
     private static final int MSG_AUTO_FOCUS = 100;
 
     private DetectThread mDetectThread = null;
